@@ -1,0 +1,153 @@
+{% comment %} <!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Room</title>
+</head>
+<body>
+    <h1>Chat Room: {{ room_name }}</h1>
+    <div id="chat-box" style="height:300px; overflow-y:scroll; border:1px solid #ccc; padding:10px;"></div>
+    <input type="text" id="message-input" placeholder="Type message...">
+    <button id="send-button">Send</button>
+
+    <script>
+        const roomName = "{{ room_name }}";
+        const token = "{{ token }}";  // JWT access token
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+        const chatSocket = new WebSocket(
+            wsProtocol + window.location.host + '/ws/chat/' + roomName + '/?token=' + token
+        );
+
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            document.getElementById('chat-box').innerHTML += `<p><b>${data.sender}:</b> ${data.message}</p>`;
+            document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
+        };
+
+        chatSocket.onclose = function(e) { console.error('Socket closed'); };
+
+        document.getElementById('send-button').onclick = function() {
+            const message = document.getElementById('message-input').value;
+            chatSocket.send(JSON.stringify({ 'message': message }));
+            document.getElementById('message-input').value = '';
+        };
+    </script>
+</body>
+</html> {% endcomment %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Room: {{ room_name }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        #chat-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        #chat-box {
+            height: 300px;
+            overflow-y: scroll;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #fff;
+        }
+        .message {
+            margin: 10px 0;
+            padding: 5px 10px;
+        }
+        .message .sender {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .message .content {
+            color: #34495e;
+        }
+        #message-input {
+            width: 70%;
+            padding: 5px;
+            margin-right: 10px;
+        }
+        #send-button {
+            padding: 5px 10px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        #send-button:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <h2>Chat Room: {{ room_name }}</h2>
+        <div id="chat-box"></div>
+        <input type="text" id="message-input" placeholder="Type a message...">
+        <button id="send-button">Send</button>
+    </div>
+
+    <script>
+        const roomName = "{{ room_name }}";
+        const token = "{{ token }}";  // JWT access token
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+        const chatSocket = new WebSocket(
+            wsProtocol + window.location.host + '/ws/chat/' + roomName + '/?token=' + encodeURIComponent(token)
+        );
+
+        chatSocket.onopen = function() {
+            console.log('WebSocket connection opened');
+        };
+
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            const chatBox = document.getElementById('chat-box');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message';
+            messageDiv.innerHTML = `<span class="sender">${data.sender}:</span> <span class="content">${data.message}</span>`;
+            chatBox.appendChild(messageDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        };
+
+        chatSocket.onclose = function(e) {
+            console.error('WebSocket connection closed:', e);
+        };
+
+        chatSocket.onerror = function(error) {
+            console.error('WebSocket error:', error);
+        };
+
+        document.getElementById('send-button').onclick = function() {
+            sendMessage();
+        };
+
+        document.getElementById('message-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            if (message && chatSocket.readyState === WebSocket.OPEN) {
+                chatSocket.send(JSON.stringify({ message: message }));
+                input.value = '';
+            }
+        }
+    </script>
+</body>
+</html>
