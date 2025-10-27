@@ -39,8 +39,17 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
         serializer = MessageSerializer(messages, many=True)
         return Response(serializer.data)
 
+# def chat_room(request, room_name):
+#     if not request.user.is_authenticated:
+#         return Response({'error': 'Login required'}, status=status.HTTP_401_UNAUTHORIZED)
+#     token = RefreshToken.for_user(request.user).access_token
+#     return render(request, 'chat/room.html', {'room_name': room_name, 'token': str(token)})
 def chat_room(request, room_name):
     if not request.user.is_authenticated:
         return Response({'error': 'Login required'}, status=status.HTTP_401_UNAUTHORIZED)
-    token = RefreshToken.for_user(request.user).access_token
-    return render(request, 'chat/room.html', {'room_name': room_name, 'token': str(token)})
+    try:
+        token = RefreshToken.for_user(request.user).access_token
+        return render(request, 'chat/room.html', {'room_name': room_name, 'token': str(token)})
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
